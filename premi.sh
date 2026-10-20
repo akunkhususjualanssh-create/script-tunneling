@@ -110,9 +110,14 @@ oid=$(cat /usr/bin/ver)
 exp=$(cat /usr/bin/e)
 clear
 # CERTIFICATE STATUS
-d1=$(date -d "$valid" +%s)
+today=$(date +"%Y-%m-%d")
 d2=$(date -d "$today" +%s)
-certifacate=$(((d1 - d2) / 86400))
+if [[ "$exp" == *"Lifetime"* ]] || [[ -z "$exp" ]]; then
+    certifacate="∞"
+else
+    d1=$(date -d "$exp" +%s 2>/dev/null || echo "$d2")
+    certifacate=$(((d1 - d2) / 86400))
+fi
 # VPS Information
 DATE=$(date +'%Y-%m-%d')
 datediff() {
@@ -211,27 +216,10 @@ function first_setup(){
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
     print_success "Directory Xray"
-    if [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "ubuntu" ]]; then
-    echo "Setup Dependencies $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
+    echo "Setup Dependencies (HAProxy)..."
     sudo apt update -y
-    apt-get install --no-install-recommends software-properties-common
-    add-apt-repository ppa:vbernat/haproxy-2.0 -y
-    apt-get -y install haproxy=2.0.\*
-elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "debian" ]]; then
-    echo "Setup Dependencies For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-    curl https://haproxy.debian.net/bernat.debian.org.gpg |
-        gpg --dearmor >/usr/share/keyrings/haproxy.debian.net.gpg
-    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-        http://haproxy.debian.net buster-backports-1.8 main \
-        >/etc/apt/sources.list.d/haproxy.list
-    sudo apt-get update
-    apt-get -y install haproxy=1.8.\*
-else
-    echo -e " Your OS Is Not Supported ($(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g') )"
-    exit 1
-fi
+    sudo apt-get install -y haproxy
 }
-
 # GEO PROJECT
 clear
 function nginx_install() {
@@ -254,7 +242,7 @@ function base_package() {
     clear
     ########
     print_install "Menginstall Packet Yang Dibutuhkan"
-    apt install zip pwgen openssl netcat socat cron bash-completion -y
+    apt install zip unzip pwgen openssl netcat-openbsd socat cron bash-completion lsof psmisc -y
     apt install figlet -y
     apt update -y
     apt upgrade -y
@@ -314,45 +302,30 @@ clear
 clear
 #GANTI PASSWORD DEFAULT
 restart_system() {
-    USRSC=$(wget -qO- https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $ipsaya | awk '{print $2}')
-    EXPSC=$(wget -qO- https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $ipsaya | awk '{print $3}')
-    TIMEZONE=$(printf '%(%H:%M:%S)T')
-    TEXT="
-<code>────────────────────</code>
-<b>⚡AUTOSCRIPT PREMIUM⚡</b>
-<code>────────────────────</code>
-<code>ID     : </code><code>$USRSC</code>
-<code>Domain : </code><code>$domain</code>
-<code>Date   : </code><code>$TIME</code>
-<code>Time   : </code><code>$TIMEZONE</code>
-<code>Ip vps : </code><code>$ipsaya</code>
-<code>PW vps : </code><code>ISI</code>
-<code>Exp Sc : </code><code>$EXPSC</code>
-<code>────────────────────</code>
-<i>Automatic Notification from Github</i>
-"'&reply_markup={"inline_keyboard":[[{"text":"ORDER🐳","url":"https://t.me/AndyYudaKLMPK"},{"text":"GROUP🐬","url":"https://chat.whatsapp.com/IMwXEDPHxatHBg9bOk7iME"}]]}'
-    curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
+    echo -e "${green}Persiapan restart sistem dan apply semua layanan...${NC}"
 }
 clear
 # Pasang SSL
 function pasang_ssl() {
 clear
 print_install "Memasang SSL Pada Domain"
-    rm -rf /etc/xray/xray.key
-    rm -rf /etc/xray/xray.crt
-    domain=$(cat /root/domain)
-    STOPWEBSERVER=$(lsof -i:80 | cut -d' ' -f1 | awk 'NR==2 {print $1}')
-    rm -rf /root/.acme.sh
-    mkdir /root/.acme.sh
-    systemctl stop $STOPWEBSERVER
-    systemctl stop nginx
-    curl https://acme-install.netlify.app/acme.sh -o /root/.acme.sh/acme.sh
-    chmod +x /root/.acme.sh/acme.sh
-    /root/.acme.sh/acme.sh --upgrade --auto-upgrade
-    /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-    /root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256
-    ~/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key --ecc
-    chmod 777 /etc/xray/xray.key
+    rm -rf /etc/xray/xray.key /etc/xray/xray.crt /etc/haproxy/hap.pem
+    domain=$(cat /root/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || echo "gensshstore.com")
+    systemctl stop nginx haproxy ws 2>/dev/null
+    fuser -k 80/tcp 443/tcp 2>/dev/null
+    mkdir -p /root/.acme.sh /etc/xray /etc/haproxy
+    curl -s https://get.acme.sh | sh -s email=admin@$domain >/dev/null 2>&1
+    /root/.acme.sh/acme.sh --upgrade --auto-upgrade >/dev/null 2>&1
+    /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt >/dev/null 2>&1
+    /root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256 --force >/dev/null 2>&1
+    /root/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key --ecc >/dev/null 2>&1
+    if [[ ! -s /etc/xray/xray.crt || ! -s /etc/xray/xray.key ]]; then
+        echo -e "${YELLOW}[WARN] Let's Encrypt gagal, membuat SSL Self-Signed otomatis...${NC}"
+        openssl req -new -newkey rsa:2048 -days 365 -nodes -x509             -subj "/C=ID/ST=Jakarta/L=Jakarta/O=GEN SSH STORE/OU=IT/CN=${domain}"             -keyout /etc/xray/xray.key -out /etc/xray/xray.crt >/dev/null 2>&1
+    fi
+    chmod 644 /etc/xray/xray.crt 2>/dev/null
+    chmod 600 /etc/xray/xray.key 2>/dev/null
+    cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/hap.pem 2>/dev/null
     print_success "SSL Certificate"
 }
 
@@ -438,6 +411,7 @@ cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
     # > Create Service
     rm -rf /etc/systemd/system/xray.service.d
     cat >/etc/systemd/system/xray.service <<EOF
+[Unit]
 Description=Xray Service
 Documentation=https://github.com
 After=network.target nss-lookup.target
@@ -549,7 +523,7 @@ clear
 cat >/etc/systemd/system/vmip.service << EOF
 [Unit]
 Description=My
-ProjectAfter=network.target
+After=network.target
 
 [Service]
 WorkingDirectory=/root
@@ -566,7 +540,7 @@ systemctl enable vmip
 cat >/etc/systemd/system/vlip.service << EOF
 [Unit]
 Description=My
-ProjectAfter=network.target
+After=network.target
 
 [Service]
 WorkingDirectory=/root
@@ -583,7 +557,7 @@ systemctl enable vlip
 cat >/etc/systemd/system/trip.service << EOF
 [Unit]
 Description=My
-ProjectAfter=network.target
+After=network.target
 
 [Service]
 WorkingDirectory=/root
@@ -705,20 +679,11 @@ cd
 rm -rf wondershaper
 echo > /home/limit
 apt install msmtp-mta ca-certificates bsd-mailx -y
-cat<<EOF>>/etc/msmtprc
+cat<<EOF>/etc/msmtprc
 defaults
 tls on
 tls_starttls on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
-
-account default
-host smtp.gmail.com
-port 587
-auth on
-user oceantestdigital@gmail.com
-from oceantestdigital@gmail.com
-password jokerman77 
-logfile ~/.msmtp.log
 EOF
 chown -R www-data:www-data /etc/msmtprc
 wget -q -O /etc/ipserver "${REPO}limit/ipserver" && bash /etc/ipserver

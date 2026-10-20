@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function send-log(){
+function send_log(){
 CHATID="1210833546"
 KEY="6006599143:AAEgstCAioq35JgX97HaW_G3TAkLKzLZS_w"
 TIME="10"
@@ -132,7 +132,7 @@ do
                   systemctl restart xray >> /dev/null 2>&1
                   bol=$(cat /etc/limit/vmess/${user});
                   total=$(con ${bol})
-                  send-log
+                  send_log
                   rm -rf /etc/limit/vmess/${user}
               else
                echo ""
@@ -168,7 +168,7 @@ do
                   systemctl restart xray >> /dev/null 2>&1
                   bol=$(cat /etc/limit/vless/${user});
                   total=$(con ${bol})
-                  send-log
+                  send_log
                   rm -rf /etc/limit/vless/${user}
               else
                echo ""
@@ -204,7 +204,7 @@ do
                   systemctl restart xray >> /dev/null 2>&1
                   bol=$(cat /etc/limit/trojan/${user});
                   total=$(con ${bol})
-                  send-log
+                  send_log
                   rm -rf /etc/limit/trojan/${user}
               else
                echo ""

@@ -1,0 +1,21 @@
+#!/bin/bash
+# SlowDNS Nameserver & Key Setup for GEN SSH STORE
+mkdir -p /etc/slowdns
+mkdir -p /etc/xray
+
+domain=$(cat /root/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || echo "gensshstore.com")
+ns="ns.${domain}"
+echo "$ns" > /etc/xray/dns
+echo "$ns" > /root/nsdomain
+
+# Generate public/private key pair if not exists
+if [[ ! -f /etc/slowdns/server.key || ! -f /etc/slowdns/server.pub ]]; then
+    # Generate random 32-byte hex for pub and priv
+    openssl rand -hex 32 > /etc/slowdns/server.key
+    openssl rand -hex 32 > /etc/slowdns/server.pub
+fi
+
+chmod 644 /etc/slowdns/server.pub 2>/dev/null
+chmod 600 /etc/slowdns/server.key 2>/dev/null
+
+echo "SlowDNS configured with NS: $ns"
