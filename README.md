@@ -2,14 +2,14 @@
 <pre><code>apt update && apt upgrade -y</code></pre>
 
 ### INSTALL SCRIPT 
-<pre><code>apt install -y && apt update -y && apt upgrade -y && apt install lolcat -y && gem install lolcat && wget -q https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/premi.sh && chmod +x premi.sh && ./premi.sh
+<pre><code>apt install -y && apt update -y && apt upgrade -y && apt install lolcat -y && gem install lolcat && wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh && chmod +x premi.sh && ./premi.sh
 </code></pre>
 
 ### UPDATE SCRIPT
-<pre><code>wget https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/update.sh && chmod +x update.sh && ./update.sh</code></pre>
+<pre><code>wget https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/update.sh && chmod +x update.sh && ./update.sh</code></pre>
 
 
-### WAJIB IZIN IP CONTACT ADMIN ©FAST VPN
+### WAJIB IZIN IP CONTACT ADMIN ©GEN SSH STORE
 https://wa.me/6285712349668
 
 

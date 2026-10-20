@@ -35,10 +35,10 @@ clear;clear;clear
 
   # // Banner
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  FAST VPN TUNELING ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
+echo -e "  GEN SSH STORE ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
 echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}Hanz tuneling® ${NC}${YELLOW}(${NC} ${green} Yass vpn Tunneling ${NC}${YELLOW})${NC}"
-echo -e " © Recode By My Self HANZ TUNELING${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
+echo -e "  Auther : ${green}GEN SSH STORE ${NC}${YELLOW}(${NC} ${green} GEN SSH STORE ${NC}${YELLOW})${NC}"
+echo -e " © Recode By My Self GEN SSH STORE${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo ""
 sleep 2
@@ -98,9 +98,11 @@ clear
 #########################
 # USERNAME
 rm -f /usr/bin/user
-username=$(curl https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/izinv2 | grep $MYIP | awk '{print $2}')
+username=$(curl -s https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $MYIP | awk '{print $2}')
+[[ -z "$username" ]] && username="GEN SSH STORE"
 echo "$username" >/usr/bin/user
-expx=$(curl https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/izinv2 | grep $MYIP | awk '{print $3}')
+expx=$(curl -s https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $MYIP | awk '{print $3}')
+[[ -z "$expx" ]] && expx="Lifetime"
 echo "$expx" >/usr/bin/e
 # DETAIL ORDER
 username=$(cat /usr/bin/user)
@@ -124,16 +126,16 @@ mai="datediff "$Exp" "$DATE""
 Info="(${green}Active${NC})"
 Error="(${RED}ExpiRED${NC})"
 today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/izinv2 | grep $MYIP | awk '{print $4}')
-if [[ $today < $Exp1 ]]; then
-sts="${Info}"
-else
+Exp1=$(curl -s https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $MYIP | awk '{print $4}')
+if [[ -n "$Exp1" ]] && [[ $today > $Exp1 ]]; then
 sts="${Error}"
+else
+sts="${Info}"
 fi
 echo -e "\e[32mloading...\e[0m"
 clear
 # REPO    
-    REPO="https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/"
+    REPO="https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/"
 
 ####
 start=$(date +%s)
@@ -312,8 +314,8 @@ clear
 clear
 #GANTI PASSWORD DEFAULT
 restart_system() {
-    USRSC=$(wget -qO- https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/izinv2 | grep $ipsaya | awk '{print $2}')
-    EXPSC=$(wget -qO- https://raw.githubusercontent.com/Rehanzcraker/Sc-hanzvip/main/izinv2 | grep $ipsaya | awk '{print $3}')
+    USRSC=$(wget -qO- https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $ipsaya | awk '{print $2}')
+    EXPSC=$(wget -qO- https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $ipsaya | awk '{print $3}')
     TIMEZONE=$(printf '%(%H:%M:%S)T')
     TEXT="
 <code>────────────────────</code>
@@ -534,7 +536,7 @@ print_success "Password SSH"
 function udp_mini(){
 clear
 print_install "Memasang Service Limit Quota"
-wget raw.githubusercontent.com/victor3232/vip/main/limit/limit.sh && chmod +x limit.sh && ./limit.sh
+wget raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/limit.sh && chmod +x limit.sh && ./limit.sh
 
 cd
 wget -q -O /usr/bin/limit-ip "${REPO}limit/limit-ip"
