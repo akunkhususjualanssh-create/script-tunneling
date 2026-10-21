@@ -24,8 +24,12 @@ data=( `ls /etc/kyt/limit/vmess/ip`);
     for user in "${data[@]}"
     do
         iplimit=$(cat /etc/kyt/limit/vmess/ip/$user)
-        ehh=$(cat /var/log/xray/access.log | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq);
-        cekcek=$(echo -e "$ehh" | wc -l);
+        ehh=$(cat /var/log/xray/access.log 2>/dev/null | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq | grep -v "^$");
+        if [[ -z "$ehh" ]]; then
+            cekcek=0
+        else
+            cekcek=$(echo "$ehh" | wc -l)
+        fi
         if [[ $cekcek -gt $iplimit ]]; then
             exp=$(grep -w "^### $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
                   sed -i "/^### $user $exp/,/^},{/d" /etc/xray/config.json
@@ -49,8 +53,12 @@ data=( `ls /etc/kyt/limit/vless/ip`);
     for user in "${data[@]}"
     do
         iplimit=$(cat /etc/kyt/limit/vless/ip/$user)
-        ehh=$(cat /var/log/xray/access.log | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq);
-        cekcek=$(echo -e "$ehh" | wc -l);
+        ehh=$(cat /var/log/xray/access.log 2>/dev/null | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq | grep -v "^$");
+        if [[ -z "$ehh" ]]; then
+            cekcek=0
+        else
+            cekcek=$(echo "$ehh" | wc -l)
+        fi
         if [[ $cekcek -gt $iplimit ]]; then
             exp=$(grep -w "^#& $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
                   sed -i "/^#& $user $exp/,/^},{/d" /etc/xray/config.json
@@ -74,8 +82,12 @@ data=( `ls /etc/kyt/limit/trojan/ip`);
     for user in "${data[@]}"
     do
         iplimit=$(cat /etc/kyt/limit/trojan/ip/$user)
-        ehh=$(cat /var/log/xray/access.log | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq);
-        cekcek=$(echo -e "$ehh" | wc -l);
+        ehh=$(cat /var/log/xray/access.log 2>/dev/null | grep "$user" | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq | grep -v "^$");
+        if [[ -z "$ehh" ]]; then
+            cekcek=0
+        else
+            cekcek=$(echo "$ehh" | wc -l)
+        fi
         if [[ $cekcek -gt $iplimit ]]; then
             exp=$(grep -w "^#! $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
                   sed -i "/^#! $user $exp/,/^},{/d" /etc/xray/config.json

@@ -1,7 +1,7 @@
 #!/bin/bash
-NS=$( cat /etc/xray/dns )
-PUB=$( cat /etc/slowdns/server.pub )
-domain=$(cat /etc/xray/domain)
+NS=$( cat /etc/xray/dns 2>/dev/null || cat /root/nsdomain 2>/dev/null || echo "" )
+PUB=$( cat /etc/slowdns/server.pub 2>/dev/null || echo "" )
+domain=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "" )
 #color
 grenbo="\e[92;1m"
 NC='\e[0m'
@@ -10,13 +10,13 @@ apt update -y && apt upgrade -y
 apt install python3 python3-pip git -y
 cd /usr/bin
 wget https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/bot.zip
-unzip bot.zip
+unzip -o bot.zip
 mv bot/* /usr/bin
 chmod +x /usr/bin/*
 rm -rf bot.zip
 clear
 wget https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/kyt.zip
-unzip kyt.zip
+unzip -o kyt.zip
 pip3 install -r kyt/requirements.txt --break-system-packages 2>/dev/null || pip3 install -r kyt/requirements.txt
 
 #isi data

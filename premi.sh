@@ -13,6 +13,7 @@ GREENBG="\033[42;37m"
 REDBG="\033[41;37m"
 OK="${Green}--->${FONT}"
 ERROR="${RED}[ERROR]${FONT}"
+EROR="${RED}[ERROR]${FONT}"
 GRAY="\e[1;30m"
 NC='\e[0m'
 red='\e[1;31m'
@@ -27,6 +28,8 @@ URL="https://core.telegram.org/bots/api"
 clear
   # // Exporint IP AddressInformation
 export IP=$( curl -sS icanhazip.com )
+NET=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
+[[ -z "$NET" ]] && NET="eth0"
 
 # // Clear Data
 clear
@@ -106,7 +109,8 @@ expx=$(curl -s https://raw.githubusercontent.com/akunkhususjualanssh-create/scri
 echo "$expx" >/usr/bin/e
 # DETAIL ORDER
 username=$(cat /usr/bin/user)
-oid=$(cat /usr/bin/ver)
+echo "2.0" > /usr/bin/ver
+oid=$(cat /usr/bin/ver 2>/dev/null || echo "2.0")
 exp=$(cat /usr/bin/e)
 clear
 # CERTIFICATE STATUS
@@ -264,7 +268,7 @@ function base_package() {
     sudo apt-get install -y --no-install-recommends software-properties-common
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-    sudo apt-get install -y speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ python htop lsof tar wget curl ruby zip unzip p7zip-full python3-pip libc6 util-linux build-essential msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools openssl ca-certificates gnupg gnupg2 ca-certificates lsb-release gcc shc make cmake git screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq openvpn easy-rsa
+    sudo apt-get install -y speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ python3 python3-pip python-is-python3 htop lsof tar wget curl ruby zip unzip p7zip-full python3-pip libc6 util-linux build-essential msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools openssl ca-certificates gnupg gnupg2 ca-certificates lsb-release gcc shc make cmake git screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq openvpn easy-rsa
     print_success "Packet Yang Dibutuhkan"
     
 }
@@ -284,14 +288,16 @@ echo ""
 if [[ $host == "1" ]]; then
 echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
 read -p "   Subdomain: " host1
-echo "IP=" >> /var/lib/kyt/ipvps.conf
+[[ -z "$host1" ]] && host1="gensshstore.com"
+echo "IP=$host1" > /var/lib/kyt/ipvps.conf
 echo $host1 > /etc/xray/domain
 echo $host1 > /root/domain
+echo $host1 > /root/scdomain
 echo ""
 elif [[ $host == "2" ]]; then
 #install cf
-wget ${REPO}limit/cf.sh && chmod +x cf.sh && ./cf.sh
-rm -f /root/cf.sh
+wget -q -O cf.sh "${REPO}limit/cf.sh" && chmod +x cf.sh && ./cf.sh
+rm -f cf.sh
 clear
 else
 print_install "Random Subdomain/Domain is Used"
@@ -301,6 +307,9 @@ clear
 
 clear
 #GANTI PASSWORD DEFAULT
+function password_default() {
+    echo -e "${green}Konfigurasi default password...${NC}"
+}
 restart_system() {
     echo -e "${green}Persiapan restart sistem dan apply semua layanan...${NC}"
 }
@@ -510,7 +519,7 @@ print_success "Password SSH"
 function udp_mini(){
 clear
 print_install "Memasang Service Limit Quota"
-wget raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/limit.sh && chmod +x limit.sh && ./limit.sh
+wget -q -O limit.sh "${REPO}limit/limit.sh" && chmod +x limit.sh && ./limit.sh
 
 cd
 wget -q -O /usr/bin/limit-ip "${REPO}limit/limit-ip"
@@ -636,21 +645,12 @@ clear
 print_install "Menginstall Vnstat"
 # setting vnstat
 apt -y install vnstat > /dev/null 2>&1
-/etc/init.d/vnstat restart
-apt -y install libsqlite3-dev > /dev/null 2>&1
-wget https://humdi.net/vnstat/vnstat-2.6.tar.gz
-tar zxvf vnstat-2.6.tar.gz
-cd vnstat-2.6
-./configure --prefix=/usr --sysconfdir=/etc && make && make install
-cd
-vnstat -u -i $NET
-sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
-chown vnstat:vnstat /var/lib/vnstat -R
-systemctl enable vnstat
-/etc/init.d/vnstat restart
-/etc/init.d/vnstat status
-rm -f /root/vnstat-2.6.tar.gz
-rm -rf /root/vnstat-2.6
+systemctl stop vnstat >/dev/null 2>&1 || true
+vnstat -u -i $NET 2>/dev/null || true
+sed -i "s/Interface \"eth0\"/Interface \"$NET\"/g" /etc/vnstat.conf 2>/dev/null || true
+chown vnstat:vnstat /var/lib/vnstat -R 2>/dev/null || true
+systemctl enable vnstat >/dev/null 2>&1
+systemctl restart vnstat >/dev/null 2>&1 || /etc/init.d/vnstat restart >/dev/null 2>&1
 print_success "Vnstat"
 }
 
