@@ -391,10 +391,16 @@ clear
     chown www-data.www-data $domainSock_dir
     
     # / / Ambil Xray Core Version Terbaru
-latest_version="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version $latest_version
- 
-    # // Ambil Config Server
+    # / / Pasang Xray Core Resmi (Direct Release Zip)
+    mkdir -p /usr/local/bin /usr/local/share/xray /var/log/xray /etc/xray /run/xray
+    wget -q -O /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" || curl -sL -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/v1.8.24/Xray-linux-64.zip"
+    unzip -o /tmp/xray.zip -d /tmp/xray-bin >/dev/null 2>&1
+    mv /tmp/xray-bin/xray /usr/local/bin/xray
+    chmod +x /usr/local/bin/xray
+    mv /tmp/xray-bin/*.dat /usr/local/share/xray/ 2>/dev/null
+    rm -rf /tmp/xray.zip /tmp/xray-bin
+    chown -R www-data:www-data /var/log/xray /etc/xray /run/xray
+    chmod -R 775 /var/log/xray
     wget -O /etc/xray/config.json "${REPO}limit/config.json" >/dev/null 2>&1
     #wget -O /usr/local/bin/xray "${REPO}xray/xray.linux.64bit" >/dev/null 2>&1
     wget -O /etc/systemd/system/runn.service "${REPO}limit/runn.service" >/dev/null 2>&1
@@ -414,7 +420,9 @@ bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release
     sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
     curl ${REPO}limit/nginx.conf > /etc/nginx/nginx.conf
     
-cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
+cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem >/dev/null 2>&1
+    chown -R www-data:www-data /var/log/xray /etc/xray /run/xray
+    chmod -R 775 /var/log/xray
 
     # > Set Permission
     chmod +x /etc/systemd/system/runn.service
@@ -721,10 +729,9 @@ print_success "Swap 1 G"
 function ins_Fail2ban(){
 clear
 print_install "Menginstall Fail2ban"
-#apt -y install fail2ban > /dev/null 2>&1
-#sudo systemctl enable --now fail2ban
-#/etc/init.d/fail2ban restart
-#/etc/init.d/fail2ban status
+apt-get install -y fail2ban > /dev/null 2>&1
+systemctl enable --now fail2ban >/dev/null 2>&1
+systemctl restart fail2ban >/dev/null 2>&1
 
 # Instal DDOS Flate
 if [ -d '/usr/local/ddos' ]; then
