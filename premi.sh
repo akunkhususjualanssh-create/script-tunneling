@@ -37,14 +37,17 @@ clear && clear && clear
 clear;clear;clear
 
   # // Banner
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  GEN SSH STORE ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
-echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}GEN SSH STORE ${NC}${YELLOW}(${NC} ${green} GEN SSH STORE ${NC}${YELLOW})${NC}"
-echo -e " © Recode By My Self GEN SSH STORE${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
+echo -e "\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m"
+echo -e "\033[1;36m│\033[0m        \033[1;37m⚡ GEN SSH STORE PREMIUM AUTOSCRIPT VIP ⚡\033[0m           \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m           \033[1;33mHigh Performance Multi-Protocol Server\033[0m            \033[1;36m│\033[0m"
+echo -e "\033[1;36m├─────────────────────────────────────────────────────────────┤\033[0m"
+echo -e "\033[1;36m│\033[0m \033[1;34m• Supported OS\033[0m : \033[1;37mUbuntu 20.04 / 22.04 LTS & Debian 10/11/12\033[0m   \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m \033[1;34m• Architecture\033[0m : \033[1;37mx86_64 (64-Bit AMD / Intel)\033[0m                  \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m \033[1;34m• Protocols\033[0m    : \033[1;37mSSH • VMess • VLess • Trojan • Shadowsocks\033[0m \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m \033[1;34m• Features\033[0m     : \033[1;37mMulti-Port • Auto-SSL • Telegram Bot Panel\033[0m \033[1;36m│\033[0m"
+echo -e "\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m"
 echo ""
-sleep 2
+sleep 1
 ###### IZIN SC 
 
 # // Checking Os Architecture
@@ -155,23 +158,23 @@ function print_ok() {
     echo -e "${OK} ${BLUE} $1 ${FONT}"
 }
 function print_install() {
-	echo -e "${green} =============================== ${FONT}"
-    echo -e "${YELLOW} # $1 ${FONT}"
-	echo -e "${green} =============================== ${FONT}"
-    sleep 1
+    echo -e "\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m"
+    printf "\033[1;36m│\033[0m  \033[1;33m⏳ MEMASANG\033[0m : %-45s \033[1;36m│\033[0m\n" "$1"
+    echo -e "\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m"
+    sleep 0.5
 }
 
 function print_error() {
-    echo -e "${ERROR} ${REDBG} $1 ${FONT}"
+    echo -e "\033[1;31m╭─────────────────────────────────────────────────────────────╮\033[0m"
+    printf "\033[1;31m│\033[0m  \033[1;41;37m ERROR \033[0m : %-47s \033[1;31m│\033[0m\n" "$1"
+    echo -e "\033[1;31m╰─────────────────────────────────────────────────────────────╯\033[0m"
 }
 
 function print_success() {
-    if [[ 0 -eq $? ]]; then
-		echo -e "${green} =============================== ${FONT}"
-        echo -e "${Green} # $1 berhasil dipasang"
-		echo -e "${green} =============================== ${FONT}"
-        sleep 2
-    fi
+    echo -e "\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m"
+    printf "\033[1;36m│\033[0m  \033[1;32m✓ BERHASIL\033[0m  : %-45s \033[1;36m│\033[0m\n" "$1"
+    echo -e "\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m"
+    sleep 0.5
 }
 
 ### Cek root
@@ -960,9 +963,19 @@ rm -rf /root/LICENSE
 rm -rf /root/README.md
 rm -rf /root/domain
 #sudo hostnamectl set-hostname $user
-secs_to_human "$(($(date +%s) - ${start}))"
+total_time="$(($(date +%s) - ${start}))"
 sudo hostnamectl set-hostname $username
-echo -e "${green} Script Successfull Installed"
+clear
+echo -e "\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m"
+echo -e "\033[1;36m│\033[0m         \033[1;32m🎉 INSTALASI SELESAI DENGAN SUKSES! 🎉\033[0m              \033[1;36m│\033[0m"
+echo -e "\033[1;36m├─────────────────────────────────────────────────────────────┤\033[0m"
+printf "\033[1;36m│\033[0m \033[1;34m• IP Server\033[0m     : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$IP"
+printf "\033[1;36m│\033[0m \033[1;34m• Domain Server\033[0m : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$domain"
+printf "\033[1;36m│\033[0m \033[1;34m• Waktu Pasang\033[0m  : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$total_time detik"
+echo -e "\033[1;36m│\033[0m \033[1;34m• Status Service\033[0m: \033[1;32mSSH • VMess • VLess • Trojan • Nginx • HAP ON\033[0m \033[1;36m│\033[0m"
+echo -e "\033[1;36m├─────────────────────────────────────────────────────────────┤\033[0m"
+echo -e "\033[1;36m│\033[0m  \033[1;33mKetik perintah '\033[1;37mmenu\033[1;33m' gasan mambuka control panel VPS\033[0m        \033[1;36m│\033[0m"
+echo -e "\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m"
 echo ""
-read -p "$( echo -e "Press ${YELLOW}[ ${NC}${YELLOW}Enter${NC} ${YELLOW}]${NC} For Reboot") "
+read -p "$( echo -e "Tekan \033[1;33m[ Enter ]\033[0m gasan reboot server") "
 reboot
