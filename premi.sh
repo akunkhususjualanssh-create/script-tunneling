@@ -135,8 +135,7 @@ mai="datediff "$Exp" "$DATE""
 Info="(${green}Active${NC})"
 Error="(${RED}ExpiRED${NC})"
 today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl -s https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/izinv2 | grep $MYIP | awk '{print $4}')
-if [[ -n "$Exp1" ]] && [[ $today > $Exp1 ]]; then
+if [[ "$exp" != *"Lifetime"* ]] && [[ -n "$exp" ]] && [[ "$today" > "$exp" ]]; then
 sts="${Error}"
 else
 sts="${Info}"
