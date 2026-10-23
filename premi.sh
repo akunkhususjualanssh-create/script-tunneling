@@ -77,7 +77,7 @@ fi
 
 # // Validate Successfull
 echo ""
-read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation") "
+read -t 3 -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation (Otomatis jalan 3 detik)...") " || true
 echo ""
 clear
 if [ "${EUID}" -ne 0 ]; then
@@ -275,36 +275,21 @@ function base_package() {
     
 }
 clear
-# Fungsi input domain
+# Fungsi input domain (Domain Sementara Otomatis Tanpa Berhenti)
 function pasang_domain() {
-echo -e ""
-clear
-    echo -e "   .----------------------------------."
-echo -e "   |\e[1;32mPlease Select a Domain Type Below \e[0m|"
-echo -e "   '----------------------------------'"
-echo -e "     \e[1;32m1)\e[0m Domain Sendiri"
-echo -e "     \e[1;32m2)\e[0m Gunakan Domain Random Dari SC"
-echo -e "   ------------------------------------"
-read -p "   Please select numbers 1 or Any Button(Random) : " host
-echo ""
-if [[ $host == "1" ]]; then
-echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
-read -p "   Subdomain: " host1
-[[ -z "$host1" ]] && host1="gensshstore.com"
-echo "IP=$host1" > /var/lib/kyt/ipvps.conf
-echo $host1 > /etc/xray/domain
-echo $host1 > /root/domain
-echo $host1 > /root/scdomain
-echo ""
-elif [[ $host == "2" ]]; then
-#install cf
-wget -q -O cf.sh "${REPO}limit/cf.sh" && chmod +x cf.sh && ./cf.sh
-rm -f cf.sh
-clear
-else
-print_install "Random Subdomain/Domain is Used"
-clear
-    fi
+    clear
+    print_install "Menyiapkan Domain Sementara (Auto-Install Tanpa Berhenti)"
+    MYIP=$(curl -sS ipv4.icanhazip.com || curl -sS ifconfig.me || wget -qO- icanhazip.com || echo "127.0.0.1")
+    TEMP_SUB=$(echo "$MYIP" | tr '.' '-')
+    domain_temp="${TEMP_SUB}.sslip.io"
+
+    mkdir -p /etc/xray /var/lib/kyt /root
+    echo "$domain_temp" > /etc/xray/domain
+    echo "$domain_temp" > /root/domain
+    echo "$domain_temp" > /root/scdomain
+    echo "IP=$domain_temp" > /var/lib/kyt/ipvps.conf
+    
+    print_success "Domain Sementara: $domain_temp"
 }
 
 clear
@@ -968,7 +953,7 @@ rm -rf /root/*.zip
 rm -rf /root/*.sh
 rm -rf /root/LICENSE
 rm -rf /root/README.md
-rm -rf /root/domain
+#rm -rf /root/domain
 #sudo hostnamectl set-hostname $user
 total_time="$(($(date +%s) - ${start}))"
 sudo hostnamectl set-hostname $username
@@ -977,12 +962,15 @@ echo -e "\033[1;36m╭───────────────────�
 echo -e "\033[1;36m│\033[0m         \033[1;32m🎉 INSTALASI SELESAI DENGAN SUKSES! 🎉\033[0m              \033[1;36m│\033[0m"
 echo -e "\033[1;36m├─────────────────────────────────────────────────────────────┤\033[0m"
 printf "\033[1;36m│\033[0m \033[1;34m• IP Server\033[0m     : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$IP"
-printf "\033[1;36m│\033[0m \033[1;34m• Domain Server\033[0m : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$domain"
+printf "\033[1;36m│\033[0m \033[1;34m• Domain Temp\033[0m   : \033[1;33m%-42s\033[0m \033[1;36m│\033[0m\n" "$domain"
 printf "\033[1;36m│\033[0m \033[1;34m• Waktu Pasang\033[0m  : \033[1;37m%-42s\033[0m \033[1;36m│\033[0m\n" "$total_time detik"
 echo -e "\033[1;36m│\033[0m \033[1;34m• Status Service\033[0m: \033[1;32mSSH • VMess • VLess • Trojan • Nginx • HAP ON\033[0m \033[1;36m│\033[0m"
 echo -e "\033[1;36m├─────────────────────────────────────────────────────────────┤\033[0m"
-echo -e "\033[1;36m│\033[0m  \033[1;33mKetik perintah '\033[1;37mmenu\033[1;33m' gasan mambuka control panel VPS\033[0m        \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m  \033[1;33mINFO PENTING DOMAIN:\033[0m                                       \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m  \033[1;37mSaat ini VPS memakai Domain Sementara ($domain)\033[0m \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m  \033[1;32mGanti ke Domain asli kapan saja dengan ketik: \033[1;93maddhost\033[0m       \033[1;36m│\033[0m"
+echo -e "\033[1;36m│\033[0m  \033[1;37mKetik perintah '\033[1;33mmenu\033[1;37m' gasan mambuka control panel VPS\033[0m        \033[1;36m│\033[0m"
 echo -e "\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m"
 echo ""
-read -p "$( echo -e "Tekan \033[1;33m[ Enter ]\033[0m gasan reboot server") "
+read -t 10 -p "$( echo -e "Tekan \033[1;33m[ Enter ]\033[0m gasan reboot server (Otomatis reboot 10s)...") " || true
 reboot
