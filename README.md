@@ -3,10 +3,10 @@ Autoscript High Performance Tunneling (SSH WS, Xray VMess, VLess, Trojan, Shadow
 
 ---
 
-### 1️⃣ METODE 1: INSTALL LANGSUNG (STANDAR)
-Gunakan perintah ini untuk instalasi langsung sekali klik:
+### 1️⃣ METODE 1: INSTALL LANGSUNG (STANDAR - VIA CURL)
+Gunakan perintah ini untuk instalasi langsung sekali klik (otomatis aman tanpa kendala wget):
 ```bash
-apt update -y && apt upgrade -y && wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh && chmod +x premi.sh && ./premi.sh
+apt update -y && apt install -y curl && curl -sSL https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh -o premi.sh && chmod +x premi.sh && ./premi.sh
 ```
 
 ---
@@ -16,7 +16,7 @@ Gunakan metode ini jika sinyal HP/Laptop Anda sering putus. Instalasi akan berja
 
 **Jalankan instalasi:**
 ```bash
-apt update -y && apt install -y screen && screen -U -d -m -S install bash -c "wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh && chmod +x premi.sh && ./premi.sh" && screen -r install
+apt update -y && apt install -y curl screen && screen -U -d -m -S install bash -c "curl -sSL https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh -o premi.sh && chmod +x premi.sh && ./premi.sh" && screen -r install
 ```
 
 **Jika koneksi / SSH Anda terputus di tengah jalan:**
@@ -40,7 +40,7 @@ addhost
 
 ### 🔄 UPDATE SCRIPT & MENU
 ```bash
-wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/update.sh && chmod +x update.sh && ./update.sh
+curl -sSL https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/update.sh -o update.sh && chmod +x update.sh && ./update.sh
 ```
 
 ---

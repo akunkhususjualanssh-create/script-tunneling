@@ -36,7 +36,7 @@ fun_bar() {
 }
 
 res1() {
-    wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip
+    curl -sSL -O https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip || wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip
     unzip -o menu.zip
     chmod +x menu/*
     mv menu/* /usr/local/sbin/
