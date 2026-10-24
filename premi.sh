@@ -1,6 +1,7 @@
 #!/bin/bash
 ### Color
 export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFOLD=1
 export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1
 
@@ -8,6 +9,15 @@ export NEEDRESTART_SUSPEND=1
 if [ -d /etc/needrestart/conf.d ]; then
     echo '$nrconf{restart} = "a";' > /etc/needrestart/conf.d/50-autorestart.conf 2>/dev/null || true
 fi
+
+# Otomatis lewati pertanyaan konflik file config (haproxy.cfg, dropbear, dll)
+mkdir -p /etc/apt/apt.conf.d
+cat << 'EOFAPT' > /etc/apt/apt.conf.d/99force-conf
+Dpkg::Options {
+   "--force-confdef";
+   "--force-confold";
+};
+EOFAPT
 
 apt update -y >/dev/null 2>&1
 apt install -y lolcat wondershaper curl wget sudo >/dev/null 2>&1 || true
