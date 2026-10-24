@@ -11,18 +11,18 @@ apt update -y && apt install -y curl && curl -sSL https://raw.githubusercontent.
 
 ---
 
-### 2️⃣ METODE 2: INSTALL DI LATAR BELAKANG (ANTI PUTUS / SINYAL HILANG)
-Gunakan metode ini jika sinyal HP/Laptop Anda sering putus. Instalasi akan berjalan di latar belakang dan **TIDAK AKAN BERHENTI** meskipun koneksi Anda terputus:
+### 2️⃣ METODE 2: INSTALL DI LATAR BELAKANG (ANTI-PUTUS / SETUP-SESSION)
+Gunakan metode ini jika sinyal HP/Laptop Anda sering putus. Paket wget, curl, screen otomatis diperbaiki ulang dan instalasi berjalan aman di latar belakang:
 
 **Jalankan instalasi:**
 ```bash
-apt update -y && apt install -y curl screen && screen -U -d -m -S install bash -c "curl -sSL https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh -o premi.sh && chmod +x premi.sh && ./premi.sh" && screen -r install
+apt update -y && apt upgrade -y --fix-missing && apt install --reinstall wget curl screen -y && screen -S setup-session bash -c "wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/premi.sh && chmod +x premi.sh && ./premi.sh"
 ```
 
 **Jika koneksi / SSH Anda terputus di tengah jalan:**
 Login kembali ke VPS Anda via SSH, lalu ketik perintah berikut untuk memantau proses instalasi kembali:
 ```bash
-screen -r install
+screen -r setup-session
 ```
 
 ---

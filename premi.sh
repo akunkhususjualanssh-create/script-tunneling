@@ -404,6 +404,8 @@ clear
     mkdir -p /usr/local/bin /usr/local/share/xray /var/log/xray /etc/xray /run/xray
     echo -e "\033[1;33m[INFO] Mengunduh binary Core Xray (~15 MB)...\033[0m"
     curl -# -L --connect-timeout 15 --retry 3 -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" || curl -sL --connect-timeout 15 -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/v1.8.24/Xray-linux-64.zip" || wget --timeout=30 -q -O /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
+    echo ""
+    echo -e "\033[1;32m[INFO] Mengekstrak Core Xray & Konfigurasi...\033[0m"
     unzip -o /tmp/xray.zip -d /tmp/xray-bin >/dev/null 2>&1
     mv /tmp/xray-bin/xray /usr/local/bin/xray
     chmod +x /usr/local/bin/xray
@@ -411,9 +413,8 @@ clear
     rm -rf /tmp/xray.zip /tmp/xray-bin
     chown -R www-data:www-data /var/log/xray /etc/xray /run/xray
     chmod -R 775 /var/log/xray
-    wget -O /etc/xray/config.json "${REPO}limit/config.json" >/dev/null 2>&1
-    #wget -O /usr/local/bin/xray "${REPO}xray/xray.linux.64bit" >/dev/null 2>&1
-    wget -O /etc/systemd/system/runn.service "${REPO}limit/runn.service" >/dev/null 2>&1
+    curl -sS -L --connect-timeout 10 -o /etc/xray/config.json "${REPO}limit/config.json" 2>/dev/null || wget -q -O /etc/xray/config.json "${REPO}limit/config.json" >/dev/null 2>&1
+    curl -sS -L --connect-timeout 10 -o /etc/systemd/system/runn.service "${REPO}limit/runn.service" 2>/dev/null || wget -q -O /etc/systemd/system/runn.service "${REPO}limit/runn.service" >/dev/null 2>&1
     #chmod +x /usr/local/bin/xray
     domain=$(cat /etc/xray/domain)
     IPVS=$(cat /etc/xray/ipvps)
@@ -469,7 +470,7 @@ print_install "Memasang Password SSH"
     wget -O /etc/pam.d/common-password "${REPO}limit/password"
 chmod +x /etc/pam.d/common-password
 
-    DEBIAN_FRONTEND=noninteractive dpkg-reconfigure keyboard-configuration
+    #DEBIAN_FRONTEND=noninteractive dpkg-reconfigure keyboard-configuration >/dev/null 2>&1 || true
     debconf-set-selections <<<"keyboard-configuration keyboard-configuration/altgr select The default for the keyboard layout"
     debconf-set-selections <<<"keyboard-configuration keyboard-configuration/compose select No compose key"
     debconf-set-selections <<<"keyboard-configuration keyboard-configuration/ctrl_alt_bksp boolean false"
