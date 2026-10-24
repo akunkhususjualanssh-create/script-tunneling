@@ -210,7 +210,7 @@ print_install "Membuat direktori xray"
     curl -s ifconfig.me > /etc/xray/ipvps
     touch /etc/xray/domain
     mkdir -p /var/log/xray
-    chown www-data.www-data /var/log/xray
+    chown -R www-data:www-data /var/log/xray
     chmod +x /var/log/xray
     touch /var/log/xray/access.log
     touch /var/log/xray/error.log
@@ -397,12 +397,13 @@ clear
     # install xray
     #echo -e "[ ${green}INFO$NC ] Downloading & Installing xray core"
     domainSock_dir="/run/xray";! [ -d $domainSock_dir ] && mkdir  $domainSock_dir
-    chown www-data.www-data $domainSock_dir
+    chown -R www-data:www-data "$domainSock_dir"
     
     # / / Ambil Xray Core Version Terbaru
     # / / Pasang Xray Core Resmi (Direct Release Zip)
     mkdir -p /usr/local/bin /usr/local/share/xray /var/log/xray /etc/xray /run/xray
-    wget -q -O /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" || curl -sL -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/v1.8.24/Xray-linux-64.zip"
+    echo -e "\033[1;33m[INFO] Mengunduh binary Core Xray (~15 MB)...\033[0m"
+    curl -# -L --connect-timeout 15 --retry 3 -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" || curl -sL --connect-timeout 15 -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/v1.8.24/Xray-linux-64.zip" || wget --timeout=30 -q -O /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
     unzip -o /tmp/xray.zip -d /tmp/xray-bin >/dev/null 2>&1
     mv /tmp/xray-bin/xray /usr/local/bin/xray
     chmod +x /usr/local/bin/xray
@@ -420,8 +421,8 @@ clear
     
     # Settings UP Nginix Server
     clear
-    curl -s ipinfo.io/city >>/etc/xray/city
-    curl -s ipinfo.io/org | cut -d " " -f 2-10 >>/etc/xray/isp
+    curl -s --connect-timeout 5 -m 8 ipinfo.io/city >>/etc/xray/city 2>/dev/null || echo "Unknown" >>/etc/xray/city
+    curl -s --connect-timeout 5 -m 8 ipinfo.io/org 2>/dev/null | cut -d " " -f 2-10 >>/etc/xray/isp || echo "Unknown" >>/etc/xray/isp
     print_install "Memasang Konfigurasi Packet"
     wget -O /etc/haproxy/haproxy.cfg "${REPO}limit/haproxy.cfg" >/dev/null 2>&1
     wget -O /etc/nginx/conf.d/xray.conf "${REPO}limit/xray.conf" >/dev/null 2>&1
