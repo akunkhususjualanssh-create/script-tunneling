@@ -1,9 +1,16 @@
 #!/bin/bash
 ### Color
-apt upgrade -y
-apt update -y
-apt install lolcat -y
-apt install wondershaper -y
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+
+# Disable needrestart prompts if present (Debian 12 & Ubuntu 22.04+)
+if [ -d /etc/needrestart/conf.d ]; then
+    echo '$nrconf{restart} = "a";' > /etc/needrestart/conf.d/50-autorestart.conf 2>/dev/null || true
+fi
+
+apt update -y >/dev/null 2>&1
+apt install -y lolcat wondershaper curl wget sudo >/dev/null 2>&1 || true
 Green="\e[92;1m"
 RED="\033[31m"
 YELLOW="\033[33m"
@@ -218,13 +225,24 @@ print_install "Membuat direktori xray"
 
 # Change Environment System
 function first_setup(){
-    timedatectl set-timezone Asia/Jakarta
+    timedatectl set-timezone Asia/Jakarta 2>/dev/null || true
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-    print_success "Directory Xray"
-    echo "Setup Dependencies (HAProxy)..."
-    sudo apt update -y
-    sudo apt-get install -y haproxy
+
+    # Pasang Swap 1GB di awal agar RAM tidak beku/OOM saat install paket berat di Debian/Ubuntu 1GB RAM
+    if [ ! -f /swapfile ]; then
+        dd if=/dev/zero of=/swapfile bs=1024 count=1048576 >/dev/null 2>&1
+        mkswap /swapfile >/dev/null 2>&1
+        chown root:root /swapfile 2>/dev/null
+        chmod 0600 /swapfile >/dev/null 2>&1
+        swapon /swapfile >/dev/null 2>&1
+        sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab 2>/dev/null
+    fi
+
+    print_success "Directory Xray & Swap"
+    print_install "Setup Dependencies (HAProxy)..."
+    apt update -y >/dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" haproxy
 }
 # GEO PROJECT
 clear
@@ -232,47 +250,43 @@ function nginx_install() {
     # // Checking System
     if [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "ubuntu" ]]; then
         print_install "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        # // sudo add-apt-repository ppa:nginx/stable -y 
-        sudo apt-get install nginx -y 
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" nginx
     elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "debian" ]]; then
         print_success "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        apt -y install nginx 
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" nginx
     else
         echo -e " Your OS Is Not Supported ( ${YELLOW}$(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')${FONT} )"
-        # // exit 1
     fi
 }
 
 # Update and remove packages
 function base_package() {
-    clear
-    ########
-    print_install "Menginstall Packet Yang Dibutuhkan"
-    apt install zip unzip pwgen openssl netcat-openbsd socat cron bash-completion lsof psmisc -y
-    apt install figlet -y
-    apt update -y
-    apt upgrade -y
-    apt dist-upgrade -y
-    systemctl enable chronyd
-    systemctl restart chronyd
-    systemctl enable chrony
-    systemctl restart chrony
-    chronyc sourcestats -v
-    chronyc tracking -v
-    apt install ntpdate -y
-    ntpdate pool.ntp.org
-    apt install sudo -y
-    sudo apt-get clean all
-    sudo apt-get autoremove -y
-    sudo apt-get install -y debconf-utils
-    sudo apt-get remove --purge exim4 -y
-    sudo apt-get remove --purge ufw firewalld -y
-    sudo apt-get install -y --no-install-recommends software-properties-common
+    print_install "Menginstall Paket Sistem & Dependensi..."
+    echo -e "\033[1;33m[INFO] Sedang mengunduh paket pendukung (3-5 menit, mohon ditunggu)...\033[0m"
+    
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" zip unzip pwgen openssl netcat-openbsd socat cron bash-completion lsof psmisc figlet sudo debconf-utils >/dev/null 2>&1
+    
+    apt-get remove --purge exim4 ufw firewalld -y >/dev/null 2>&1 || true
+    
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-    sudo apt-get install -y speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ python3 python3-pip python-is-python3 htop lsof tar wget curl ruby zip unzip p7zip-full python3-pip libc6 util-linux build-essential msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools openssl ca-certificates gnupg gnupg2 ca-certificates lsb-release gcc shc make cmake git screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq openvpn easy-rsa
-    print_success "Packet Yang Dibutuhkan"
-    
+
+    # Install semua paket yang dibutuhkan secara non-interaktif (Aman di Debian 10/11/12 & Ubuntu 20.04/22.04/24.04)
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+        speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils \
+        libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix \
+        zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ \
+        python3 python3-pip python-is-python3 htop lsof tar wget curl ruby p7zip-full libc6 util-linux \
+        msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools \
+        gnupg gnupg2 lsb-release shc cmake git screen socat xz-utils apt-transport-https dnsutils \
+        cron bash-completion chrony jq openvpn easy-rsa
+
+    # Sinkronisasi waktu non-blocking
+    systemctl enable chrony >/dev/null 2>&1 || true
+    systemctl restart chrony >/dev/null 2>&1 || true
+    timeout 5 chronyc tracking -v >/dev/null 2>&1 || true
+
+    print_success "Paket Yang Dibutuhkan Berhasil Terpasang"
 }
 clear
 # Fungsi input domain (Domain Sementara Otomatis Tanpa Berhenti)
@@ -669,7 +683,7 @@ wget -O /root/.config/rclone/rclone.conf "${REPO}limit/rclone.conf"
 cd /bin
 git clone  https://github.com/magnific0/wondershaper.git
 cd wondershaper
-sudo make install
+make install 2>/dev/null || true
 cd
 rm -rf wondershaper
 echo > /home/limit
@@ -688,27 +702,26 @@ print_success "Backup Server"
 clear
 function ins_swab(){
 clear
-print_install "Memasang Swap 1 G"
-gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-    gotop_link="https://github.com/xxxserxxx/gotop/releases/download/v$gotop_latest/gotop_v"$gotop_latest"_linux_amd64.deb"
-    curl -sL "$gotop_link" -o /tmp/gotop.deb
-    dpkg -i /tmp/gotop.deb >/dev/null 2>&1
-    
-        # > Buat swap sebesar 1G
-    dd if=/dev/zero of=/swapfile bs=1024 count=1048576
-    mkswap /swapfile
-    chown root:root /swapfile
+print_install "Memasang Swap 1 G & BBR"
+gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases 2>/dev/null | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
+[[ -z "$gotop_latest" ]] && gotop_latest="4.2.0"
+gotop_link="https://github.com/xxxserxxx/gotop/releases/download/v$gotop_latest/gotop_v"$gotop_latest"_linux_amd64.deb"
+curl -sL "$gotop_link" -o /tmp/gotop.deb 2>/dev/null
+dpkg -i /tmp/gotop.deb >/dev/null 2>&1 || true
+rm -f /tmp/gotop.deb
+
+if [ ! -f /swapfile ]; then
+    dd if=/dev/zero of=/swapfile bs=1024 count=1048576 >/dev/null 2>&1
+    mkswap /swapfile >/dev/null 2>&1
+    chown root:root /swapfile 2>/dev/null
     chmod 0600 /swapfile >/dev/null 2>&1
     swapon /swapfile >/dev/null 2>&1
-    sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
+    sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab 2>/dev/null
+fi
 
-    # > Singkronisasi jam
-    chronyd -q 'server 0.id.pool.ntp.org iburst'
-    chronyc sourcestats -v
-    chronyc tracking -v
-    
-    wget ${REPO}limit/bbr.sh &&  chmod +x bbr.sh && ./bbr.sh
-print_success "Swap 1 G"
+wget -q -O bbr.sh "${REPO}limit/bbr.sh" && chmod +x bbr.sh && ./bbr.sh >/dev/null 2>&1 || true
+rm -f bbr.sh
+print_success "Swap 1 G & BBR"
 }
 
 function ins_Fail2ban(){
@@ -956,7 +969,7 @@ rm -rf /root/README.md
 #rm -rf /root/domain
 #sudo hostnamectl set-hostname $user
 total_time="$(($(date +%s) - ${start}))"
-sudo hostnamectl set-hostname $username
+hostnamectl set-hostname "$username" 2>/dev/null || true
 clear
 echo -e "\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m"
 echo -e "\033[1;36m│\033[0m         \033[1;32m🎉 INSTALASI SELESAI DENGAN SUKSES! 🎉\033[0m              \033[1;36m│\033[0m"
