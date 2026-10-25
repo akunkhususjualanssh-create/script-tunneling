@@ -702,31 +702,12 @@ print_success "OpenVPN"
 
 function ins_backup(){
 clear
-print_install "Memasang Backup Server"
-#BackupOption
-apt install rclone -y
-printf "q\n" | rclone config
-mkdir -p /root/.config/rclone
-    download_file "/root/.config/rclone/rclone.conf" "${REPO}limit/rclone.conf"
-#Install Wondershaper
-cd /bin
-git clone  https://github.com/magnific0/wondershaper.git
-cd wondershaper
-make install 2>/dev/null || true
-cd
-rm -rf wondershaper
-echo > /home/limit
-apt install msmtp-mta ca-certificates bsd-mailx -y
-cat<<EOF>/etc/msmtprc
-defaults
-tls on
-tls_starttls on
-tls_trust_file /etc/ssl/certs/ca-certificates.crt
-EOF
-chown -R www-data:www-data /etc/msmtprc
-download_file "/etc/ipserver" "${REPO}limit/ipserver"
+print_install "Memasang Backup & Firewall Server"
+    mkdir -p /var/www/html /root/backup
+    echo > /home/limit
+    download_file "/etc/ipserver" "${REPO}limit/ipserver"
     bash /etc/ipserver >/dev/null 2>&1 || true
-print_success "Backup Server"
+    print_success "Backup & Firewall"
 }
 
 clear
