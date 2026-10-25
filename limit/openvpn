@@ -1,7 +1,7 @@
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
 OS=`uname -m`;
-MYIP=$(wget -qO- ipinfo.io/ip);
+MYIP=$(cat /etc/xray/ipvps 2>/dev/null || echo "127.0.0.1");
 domain=$(cat /root/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || echo "$MYIP")
 #MYIP2="s/xxxxxxxxx/$MYIP/g";
 MYIP2="s/xxxxxxxxx/$domain/g";
@@ -9,7 +9,7 @@ MYIP2="s/xxxxxxxxx/$domain/g";
 function ovpn_install() {
     rm -rf /etc/openvpn
     mkdir -p /etc/openvpn
-    wget -O /etc/openvpn/vpn.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/vpn.zip" >/dev/null 2>&1 
+    curl -4 -sSL --connect-timeout 10 -m 30 -o /etc/openvpn/vpn.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/vpn.zip" 2>/dev/null || wget -4 -q --timeout=15 -O /etc/openvpn/vpn.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/vpn.zip" >/dev/null 2>&1 
     unzip -d /etc/openvpn/ /etc/openvpn/vpn.zip
     rm -f /etc/openvpn/vpn.zip
     chown -R root:root /etc/openvpn/server/easy-rsa/

@@ -51,7 +51,7 @@ NC='\e[0m'
 red='\e[1;31m'
 green='\e[0;32m'
 TIME=$(date '+%d %b %Y')
-ipsaya=$(curl -sS ipv4.icanhazip.com)
+ipsaya=$(curl -4 -sS --connect-timeout 3 -m 5 ipv4.icanhazip.com 2>/dev/null || echo "127.0.0.1")
 TIMES="10"
 CHATID="5289385265"
 KEY="6525206851:AAEK0Wcrr86LiFOe8M0E4Vn9xH0qIPN8rqE"
@@ -59,7 +59,10 @@ URL="https://core.telegram.org/bots/api"
 # ===================
 clear
   # // Exporint IP AddressInformation
-export IP=$( curl -sS icanhazip.com )
+export IP=$(curl -4 -sS --connect-timeout 3 -m 5 ipv4.icanhazip.com 2>/dev/null || echo "127.0.0.1")
+mkdir -p /etc/xray /root
+echo "$IP" > /etc/xray/ipvps
+echo "$IP" > /root/ipvps
 NET=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
 [[ -z "$NET" ]] && NET="eth0"
 
@@ -124,11 +127,11 @@ red='\e[1;31m'
 green='\e[0;32m'
 NC='\e[0m'
 #IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
+MYIP=$(cat /etc/xray/ipvps 2>/dev/null || echo "127.0.0.1")
 echo -e "\e[32mloading...\e[0m"
 clear
 #IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
+MYIP=$(cat /etc/xray/ipvps 2>/dev/null || echo "127.0.0.1")
 echo -e "\e[32mloading...\e[0m" 
 clear
 # Version sc
@@ -246,7 +249,7 @@ print_install "Membuat direktori xray"
     export OS_Name=$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/PRETTY_NAME//g' | sed 's/=//g' | sed 's/"//g' )
     export Kernel=$( uname -r )
     export Arch=$( uname -m )
-    export IP=$( curl -s https://ipinfo.io/ip/ )
+    export IP=$(cat /etc/xray/ipvps 2>/dev/null || echo "127.0.0.1")
 
 # Change Environment System
 function first_setup(){
