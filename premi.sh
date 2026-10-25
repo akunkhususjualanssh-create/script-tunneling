@@ -674,6 +674,19 @@ print_install "Menginstall Dropbear"
     DEBIAN_FRONTEND=noninteractive apt-get install -y dropbear >/dev/null 2>&1 || true
     download_file "/etc/default/dropbear" "${REPO}limit/dropbear.conf"
     chmod 644 /etc/default/dropbear 2>/dev/null || true
+    # Patch Dropbear binary banner to 2019
+    python3 -c '
+import os
+for p in ["/usr/sbin/dropbear", "/usr/bin/dropbear"]:
+    if os.path.exists(p):
+        try:
+            with open(p, "rb") as f: d = f.read()
+            for o in [b"dropbear_2022.83", b"dropbear_2020.81", b"dropbear_2020.80"]:
+                if o in d:
+                    d = d.replace(o, b"dropbear_2019.78")
+                    with open(p, "wb") as f: f.write(d)
+        except: pass
+' 2>/dev/null || true
     systemctl restart dropbear 2>/dev/null || /etc/init.d/dropbear restart 2>/dev/null || true
 print_success "Dropbear"
 }
