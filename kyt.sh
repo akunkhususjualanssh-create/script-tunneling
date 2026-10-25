@@ -9,14 +9,17 @@ NC='\e[0m'
 apt update -y && apt upgrade -y
 apt install python3 python3-pip git -y
 cd /usr/bin
-wget https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/bot.zip
-unzip -o bot.zip
-mv bot/* /usr/bin
-chmod +x /usr/bin/*
-rm -rf bot.zip
+curl -4 -sSL --connect-timeout 8 --max-time 30 -o /usr/bin/bot.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/bot.zip || wget -4 -q --timeout=10 --tries=2 -O /usr/bin/bot.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/bot.zip
+unzip -o -q bot.zip
+if [ -d bot ]; then
+    mv bot/* /usr/bin/ 2>/dev/null || true
+fi
+chmod +x /usr/bin/* 2>/dev/null || true
+rm -rf bot.zip bot
 clear
-wget https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/kyt.zip
-unzip -o kyt.zip
+curl -4 -sSL --connect-timeout 8 --max-time 30 -o /usr/bin/kyt.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/kyt.zip || wget -4 -q --timeout=10 --tries=2 -O /usr/bin/kyt.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/kyt.zip
+unzip -o -q kyt.zip
+rm -rf kyt.zip
 pip3 install -r kyt/requirements.txt --break-system-packages 2>/dev/null || pip3 install -r kyt/requirements.txt
 
 #isi data

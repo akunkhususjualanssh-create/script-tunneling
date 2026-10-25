@@ -5,19 +5,34 @@ export UCF_FORCE_CONFOLD=1
 export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1
 
+# Force IPv4 to prevent hanging on misconfigured IPv6 cloud VPS
+sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1 || true
+sysctl -w net.ipv6.conf.default.disable_ipv6=1 >/dev/null 2>&1 || true
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6 2>/dev/null || true
+
 # Disable needrestart prompts if present (Debian 12 & Ubuntu 22.04+)
 if [ -d /etc/needrestart/conf.d ]; then
     echo '$nrconf{restart} = "a";' > /etc/needrestart/conf.d/50-autorestart.conf 2>/dev/null || true
 fi
 
-# Otomatis lewati pertanyaan konflik file config (haproxy.cfg, dropbear, dll)
+# Otomatis lewati pertanyaan konflik file config (haproxy.cfg, dropbear, dll) & paksa IPv4
 mkdir -p /etc/apt/apt.conf.d
 cat << 'EOFAPT' > /etc/apt/apt.conf.d/99force-conf
 Dpkg::Options {
    "--force-confdef";
    "--force-confold";
 };
+Acquire::ForceIPv4 "true";
 EOFAPT
+
+# Universal robust download helper with IPv4 forced & strict timeouts
+download_file() {
+    local target="$1"
+    local url="$2"
+    mkdir -p "$(dirname "$target")" 2>/dev/null || true
+    curl -4 -sS -L --connect-timeout 8 --max-time 30 -o "$target" "$url" 2>/dev/null || \
+    wget -4 -q --timeout=10 --tries=2 -O "$target" "$url" 2>/dev/null || true
+}
 
 apt update -y >/dev/null 2>&1
 apt install -y lolcat wondershaper curl wget sudo >/dev/null 2>&1 || true
@@ -283,13 +298,14 @@ function base_package() {
 
     # Install semua paket yang dibutuhkan secara non-interaktif (Aman di Debian 10/11/12 & Ubuntu 20.04/22.04/24.04)
     DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-        speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils \
-        libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix \
-        zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ \
-        python3 python3-pip python-is-python3 htop lsof tar wget curl ruby p7zip-full libc6 util-linux \
-        msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools \
+        speedtest-cli vnstat pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils \
+        flex bison make libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev \
+        sed dirmngr build-essential gcc g++ python3 python3-pip python-is-python3 htop lsof \
+        tar wget curl ruby p7zip-full libc6 util-linux msmtp-mta ca-certificates bsd-mailx \
+        iptables iptables-persistent netfilter-persistent net-tools \
         gnupg gnupg2 lsb-release shc cmake git screen socat xz-utils apt-transport-https dnsutils \
-        cron bash-completion chrony jq openvpn easy-rsa
+        cron bash-completion chrony jq openvpn easy-rsa >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive apt-get install -y libnss3-dev libnspr4-dev libnss3-tools libcurl4-openssl-dev libselinux1-dev libxml-parser-perl
 
     # Sinkronisasi waktu non-blocking
     systemctl enable chrony >/dev/null 2>&1 || true
@@ -413,30 +429,32 @@ clear
     rm -rf /tmp/xray.zip /tmp/xray-bin
     chown -R www-data:www-data /var/log/xray /etc/xray /run/xray
     chmod -R 775 /var/log/xray
-    curl -sS -L --connect-timeout 10 -o /etc/xray/config.json "${REPO}limit/config.json" 2>/dev/null || wget -q -O /etc/xray/config.json "${REPO}limit/config.json" >/dev/null 2>&1
-    curl -sS -L --connect-timeout 10 -o /etc/systemd/system/runn.service "${REPO}limit/runn.service" 2>/dev/null || wget -q -O /etc/systemd/system/runn.service "${REPO}limit/runn.service" >/dev/null 2>&1
-    #chmod +x /usr/local/bin/xray
-    domain=$(cat /etc/xray/domain)
-    IPVS=$(cat /etc/xray/ipvps)
+    download_file "/etc/xray/config.json" "${REPO}limit/config.json"
+    download_file "/etc/systemd/system/runn.service" "${REPO}limit/runn.service"
+    domain=$(cat /etc/xray/domain 2>/dev/null || echo "gensshstore.com")
+    IPVS=$(cat /etc/xray/ipvps 2>/dev/null || echo "$IP")
     print_success "Core Xray 1.8.1 Latest Version"
     
     # Settings UP Nginix Server
     clear
-    curl -s --connect-timeout 5 -m 8 ipinfo.io/city >>/etc/xray/city 2>/dev/null || echo "Unknown" >>/etc/xray/city
-    curl -s --connect-timeout 5 -m 8 ipinfo.io/org 2>/dev/null | cut -d " " -f 2-10 >>/etc/xray/isp || echo "Unknown" >>/etc/xray/isp
+    curl -4 -s --connect-timeout 5 -m 8 ipinfo.io/city >>/etc/xray/city 2>/dev/null || echo "Unknown" >>/etc/xray/city
+    curl -4 -s --connect-timeout 5 -m 8 ipinfo.io/org 2>/dev/null | cut -d " " -f 2-10 >>/etc/xray/isp || echo "Unknown" >>/etc/xray/isp
     print_install "Memasang Konfigurasi Packet"
-    wget -O /etc/haproxy/haproxy.cfg "${REPO}limit/haproxy.cfg" >/dev/null 2>&1
-    wget -O /etc/nginx/conf.d/xray.conf "${REPO}limit/xray.conf" >/dev/null 2>&1
-    sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
-    sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
-    curl ${REPO}limit/nginx.conf > /etc/nginx/nginx.conf
+    mkdir -p /etc/haproxy /etc/nginx/conf.d /etc/xray
+    download_file "/etc/haproxy/haproxy.cfg" "${REPO}limit/haproxy.cfg"
+    download_file "/etc/nginx/conf.d/xray.conf" "${REPO}limit/xray.conf"
+    download_file "/etc/nginx/nginx.conf" "${REPO}limit/nginx.conf"
+    sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg 2>/dev/null || true
+    sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf 2>/dev/null || true
     
-cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem >/dev/null 2>&1
-    chown -R www-data:www-data /var/log/xray /etc/xray /run/xray
-    chmod -R 775 /var/log/xray
+    if [[ -f /etc/xray/xray.crt && -f /etc/xray/xray.key ]]; then
+        cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/hap.pem 2>/dev/null || true
+    fi
+    chown -R www-data:www-data /var/log/xray /etc/xray /run/xray 2>/dev/null || true
+    chmod -R 775 /var/log/xray 2>/dev/null || true
 
     # > Set Permission
-    chmod +x /etc/systemd/system/runn.service
+    chmod +x /etc/systemd/system/runn.service 2>/dev/null || true
 
     # > Create Service
     rm -rf /etc/systemd/system/xray.service.d
@@ -467,8 +485,9 @@ print_success "Konfigurasi Packet"
 function ssh(){
 clear
 print_install "Memasang Password SSH"
-    wget -O /etc/pam.d/common-password "${REPO}limit/password"
-chmod +x /etc/pam.d/common-password
+    download_file "/etc/pam.d/common-password" "${REPO}limit/password"
+    chmod +x /etc/pam.d/common-password 2>/dev/null || true
+    systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || /etc/init.d/ssh restart 2>/dev/null || true
 
     #DEBIAN_FRONTEND=noninteractive dpkg-reconfigure keyboard-configuration >/dev/null 2>&1 || true
     debconf-set-selections <<<"keyboard-configuration keyboard-configuration/altgr select The default for the keyboard layout"
@@ -540,10 +559,10 @@ print_success "Password SSH"
 function udp_mini(){
 clear
 print_install "Memasang Service Limit Quota"
-wget -q -O limit.sh "${REPO}limit/limit.sh" && chmod +x limit.sh && ./limit.sh
+download_file "/root/limit.sh" "${REPO}limit/limit.sh" && chmod +x /root/limit.sh && /root/limit.sh >/dev/null 2>&1 || true
 
 cd
-wget -q -O /usr/bin/limit-ip "${REPO}limit/limit-ip"
+download_file "/usr/bin/limit-ip" "${REPO}limit/limit-ip"
 chmod +x /usr/bin/*
 cd /usr/bin
 sed -i 's/\r//' limit-ip
@@ -605,11 +624,11 @@ systemctl enable trip
 #SERVICE VMESS
 # // Installing UDP Mini
 mkdir -p /usr/local/kyt/
-wget -q -O /usr/local/kyt/udp-mini "${REPO}limit/udp-mini"
+download_file "/usr/local/kyt/udp-mini" "${REPO}limit/udp-mini"
 chmod +x /usr/local/kyt/udp-mini
-wget -q -O /etc/systemd/system/udp-mini-1.service "${REPO}limit/udp-mini-1.service"
-wget -q -O /etc/systemd/system/udp-mini-2.service "${REPO}limit/udp-mini-2.service"
-wget -q -O /etc/systemd/system/udp-mini-3.service "${REPO}limit/udp-mini-3.service"
+download_file "/etc/systemd/system/udp-mini-1.service" "${REPO}limit/udp-mini-1.service"
+download_file "/etc/systemd/system/udp-mini-2.service" "${REPO}limit/udp-mini-2.service"
+download_file "/etc/systemd/system/udp-mini-3.service" "${REPO}limit/udp-mini-3.service"
 systemctl disable udp-mini-1
 systemctl stop udp-mini-1
 systemctl enable udp-mini-1
@@ -629,9 +648,9 @@ function ssh_slow(){
 clear
 # // Installing UDP Mini
 print_install "Memasang modul SlowDNS Server"
-    wget -q -O /tmp/nameserver "${REPO}limit/nameserver" >/dev/null 2>&1
-    chmod +x /tmp/nameserver
-    bash /tmp/nameserver | tee /root/install.log
+    download_file "/tmp/nameserver" "${REPO}limit/nameserver"
+    chmod +x /tmp/nameserver 2>/dev/null || true
+    bash /tmp/nameserver >/dev/null 2>&1 || true
  print_success "SlowDNS"
 }
 
@@ -639,11 +658,9 @@ clear
 function ins_SSHD(){
 clear
 print_install "Memasang SSHD"
-wget -q -O /etc/ssh/sshd_config "${REPO}limit/sshd" >/dev/null 2>&1
-chmod 700 /etc/ssh/sshd_config
-/etc/init.d/ssh restart
-systemctl restart ssh
-/etc/init.d/ssh status
+    download_file "/etc/ssh/sshd_config" "${REPO}limit/sshd"
+    chmod 644 /etc/ssh/sshd_config 2>/dev/null || true
+    systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || /etc/init.d/ssh restart 2>/dev/null || true
 print_success "SSHD"
 }
 
@@ -651,12 +668,10 @@ clear
 function ins_dropbear(){
 clear
 print_install "Menginstall Dropbear"
-# // Installing Dropbear
-apt-get install dropbear -y > /dev/null 2>&1
-wget -q -O /etc/default/dropbear "${REPO}limit/dropbear.conf"
-chmod +x /etc/default/dropbear
-/etc/init.d/dropbear restart
-/etc/init.d/dropbear status
+    DEBIAN_FRONTEND=noninteractive apt-get install -y dropbear >/dev/null 2>&1 || true
+    download_file "/etc/default/dropbear" "${REPO}limit/dropbear.conf"
+    chmod 644 /etc/default/dropbear 2>/dev/null || true
+    systemctl restart dropbear 2>/dev/null || /etc/init.d/dropbear restart 2>/dev/null || true
 print_success "Dropbear"
 }
 
@@ -678,9 +693,10 @@ print_success "Vnstat"
 function ins_openvpn(){
 clear
 print_install "Menginstall OpenVPN"
-#OpenVPN
-wget ${REPO}limit/openvpn &&  chmod +x openvpn && ./openvpn
-/etc/init.d/openvpn restart
+    download_file "/root/openvpn" "${REPO}limit/openvpn"
+    chmod +x /root/openvpn 2>/dev/null || true
+    /root/openvpn >/dev/null 2>&1 || true
+    systemctl restart openvpn 2>/dev/null || /etc/init.d/openvpn restart 2>/dev/null || true
 print_success "OpenVPN"
 }
 
@@ -690,7 +706,8 @@ print_install "Memasang Backup Server"
 #BackupOption
 apt install rclone -y
 printf "q\n" | rclone config
-wget -O /root/.config/rclone/rclone.conf "${REPO}limit/rclone.conf"
+mkdir -p /root/.config/rclone
+    download_file "/root/.config/rclone/rclone.conf" "${REPO}limit/rclone.conf"
 #Install Wondershaper
 cd /bin
 git clone  https://github.com/magnific0/wondershaper.git
@@ -707,7 +724,8 @@ tls_starttls on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
 EOF
 chown -R www-data:www-data /etc/msmtprc
-wget -q -O /etc/ipserver "${REPO}limit/ipserver" && bash /etc/ipserver
+download_file "/etc/ipserver" "${REPO}limit/ipserver"
+    bash /etc/ipserver >/dev/null 2>&1 || true
 print_success "Backup Server"
 }
 
@@ -731,8 +749,9 @@ if [ ! -f /swapfile ]; then
     sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab 2>/dev/null
 fi
 
-wget -q -O bbr.sh "${REPO}limit/bbr.sh" && chmod +x bbr.sh && ./bbr.sh >/dev/null 2>&1 || true
-rm -f bbr.sh
+download_file "/root/bbr.sh" "${REPO}limit/bbr.sh"
+    chmod +x /root/bbr.sh 2>/dev/null && /root/bbr.sh >/dev/null 2>&1 || true
+    rm -f /root/bbr.sh 2>/dev/null || true
 print_success "Swap 1 G & BBR"
 }
 
@@ -757,28 +776,26 @@ echo "Banner /etc/kyt.txt" >>/etc/ssh/sshd_config
 sed -i 's@DROPBEAR_BANNER=""@DROPBEAR_BANNER="/etc/kyt.txt"@g' /etc/default/dropbear
 
 # Ganti Banner
-wget -O /etc/kyt.txt "${REPO}limit/issue.net"
+download_file "/etc/kyt.txt" "${REPO}limit/issue.net"
 print_success "Fail2ban"
 }
 
 function ins_epro(){
 clear
 print_install "Menginstall ePro WebSocket Proxy"
-    wget -O /usr/bin/ws "${REPO}limit/ws" >/dev/null 2>&1
-    wget -O /usr/bin/tun.conf "${REPO}limit/tun.conf" >/dev/null 2>&1
-    wget -O /etc/systemd/system/ws.service "${REPO}limit/ws.service" >/dev/null 2>&1
-    chmod +x /etc/systemd/system/ws.service
-    chmod +x /usr/bin/ws
-    chmod 644 /usr/bin/tun.conf
-systemctl disable ws
-systemctl stop ws
-systemctl enable ws
-systemctl start ws
-systemctl restart ws
-wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
-wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
-wget -O /usr/sbin/ftvpn "${REPO}limit/ftvpn" >/dev/null 2>&1
-chmod +x /usr/sbin/ftvpn
+    download_file "/usr/bin/ws" "${REPO}limit/ws"
+    download_file "/usr/bin/tun.conf" "${REPO}limit/tun.conf"
+    download_file "/etc/systemd/system/ws.service" "${REPO}limit/ws.service"
+    chmod +x /etc/systemd/system/ws.service /usr/bin/ws 2>/dev/null || true
+    chmod 644 /usr/bin/tun.conf 2>/dev/null || true
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl enable --now ws 2>/dev/null || true
+    systemctl restart ws 2>/dev/null || true
+    mkdir -p /usr/local/share/xray
+    download_file "/usr/local/share/xray/geosite.dat" "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+    download_file "/usr/local/share/xray/geoip.dat" "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+    download_file "/usr/sbin/ftvpn" "${REPO}limit/ftvpn"
+    chmod +x /usr/sbin/ftvpn 2>/dev/null || true
 iptables -A FORWARD -m string --string "get_peers" --algo bm -j DROP
 iptables -A FORWARD -m string --string "announce_peer" --algo bm -j DROP
 iptables -A FORWARD -m string --string "find_node" --algo bm -j DROP
@@ -805,26 +822,24 @@ print_success "ePro WebSocket Proxy"
 function ins_restart(){
 clear
 print_install "Restarting  All Packet"
-/etc/init.d/nginx restart
-/etc/init.d/openvpn restart
-/etc/init.d/ssh restart
-/etc/init.d/dropbear restart
-/etc/init.d/fail2ban restart
-/etc/init.d/vnstat restart
-systemctl restart haproxy
-/etc/init.d/cron restart
-    systemctl daemon-reload
-    systemctl start netfilter-persistent
-    systemctl enable --now nginx
-    systemctl enable --now xray
-    systemctl enable --now rc-local
-    systemctl enable --now dropbear
-    systemctl enable --now openvpn
-    systemctl enable --now cron
-    systemctl enable --now haproxy
-    systemctl enable --now netfilter-persistent
-    systemctl enable --now ws
-    systemctl enable --now fail2ban
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl restart nginx 2>/dev/null || /etc/init.d/nginx restart 2>/dev/null || true
+    systemctl restart openvpn 2>/dev/null || /etc/init.d/openvpn restart 2>/dev/null || true
+    systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || /etc/init.d/ssh restart 2>/dev/null || true
+    systemctl restart dropbear 2>/dev/null || /etc/init.d/dropbear restart 2>/dev/null || true
+    systemctl restart fail2ban 2>/dev/null || /etc/init.d/fail2ban restart 2>/dev/null || true
+    systemctl restart vnstat 2>/dev/null || /etc/init.d/vnstat restart 2>/dev/null || true
+    systemctl restart haproxy 2>/dev/null || /etc/init.d/haproxy restart 2>/dev/null || true
+    systemctl restart cron 2>/dev/null || /etc/init.d/cron restart 2>/dev/null || true
+    systemctl enable --now nginx 2>/dev/null || true
+    systemctl enable --now xray 2>/dev/null || true
+    systemctl enable --now dropbear 2>/dev/null || true
+    systemctl enable --now openvpn 2>/dev/null || true
+    systemctl enable --now cron 2>/dev/null || true
+    systemctl enable --now haproxy 2>/dev/null || true
+    systemctl enable --now netfilter-persistent 2>/dev/null || true
+    systemctl enable --now ws 2>/dev/null || true
+    systemctl enable --now fail2ban 2>/dev/null || true
 history -c
 echo "unset HISTFILE" >> /etc/profile
 
@@ -839,12 +854,18 @@ print_success "All Packet"
 function menu(){
     clear
     print_install "Memasang Menu Packet"
-    wget ${REPO}limit/menu.zip
-    unzip menu.zip
-    chmod +x menu/*
-    mv menu/* /usr/local/sbin
-    rm -rf menu
-    rm -rf menu.zip
+    mkdir -p /root/menu-unpack /usr/local/sbin
+    download_file "/root/menu.zip" "${REPO}limit/menu.zip"
+    unzip -o -q /root/menu.zip -d /root/menu-unpack >/dev/null 2>&1 || true
+    if [ -d /root/menu-unpack/menu ]; then
+        chmod +x /root/menu-unpack/menu/* 2>/dev/null || true
+        mv -f /root/menu-unpack/menu/* /usr/local/sbin/ 2>/dev/null || true
+    elif [ -d /root/menu-unpack ]; then
+        chmod +x /root/menu-unpack/* 2>/dev/null || true
+        mv -f /root/menu-unpack/* /usr/local/sbin/ 2>/dev/null || true
+    fi
+    rm -rf /root/menu-unpack /root/menu.zip /root/menu 2>/dev/null || true
+    print_success "Menu Packet"
 }
 
 # Membaut Default Menu 

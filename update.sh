@@ -36,11 +36,14 @@ fun_bar() {
 }
 
 res1() {
-    curl -sSL -O https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip || wget -q https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip
-    unzip -o menu.zip
-    chmod +x menu/*
-    mv menu/* /usr/local/sbin/
-    rm -rf menu menu.zip
+    curl -4 -sSL --connect-timeout 8 --max-time 30 -o /root/menu.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip || wget -4 -q --timeout=10 --tries=2 -O /root/menu.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip
+    mkdir -p /root/menu-unpack /usr/local/sbin
+    unzip -o -q /root/menu.zip -d /root/menu-unpack >/dev/null 2>&1 || true
+    if [ -d /root/menu-unpack/menu ]; then
+        chmod +x /root/menu-unpack/menu/* 2>/dev/null || true
+        mv -f /root/menu-unpack/menu/* /usr/local/sbin/ 2>/dev/null || true
+    fi
+    rm -rf /root/menu-unpack /root/menu.zip /root/menu 2>/dev/null || true
 }
 
 clear
