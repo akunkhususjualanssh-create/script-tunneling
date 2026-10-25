@@ -19,8 +19,9 @@ echo ""
 
 echo -e "  [1/2] ${c_yellow}Mengunduh paket menu terbaru...${c_nc}"
 rm -rf /root/menu-unpack /root/menu.zip
-curl -4 -# -L --connect-timeout 10 -o /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip" || \
-wget -4 -q --timeout=15 -O /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip"
+curl -4 -sSL "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/update.sh?v=$(date +%s)" -o /usr/local/sbin/update 2>/dev/null && chmod +x /usr/local/sbin/update 2>/dev/null || true
+curl -4 -# -L --connect-timeout 10 -o /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip?v=$(date +%s)" || \
+wget -4 -q --timeout=15 -O /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip?v=$(date +%s)"
 
 if [[ ! -s /root/menu.zip ]]; then
     echo -e "  \033[1;31m[ERROR] Gagal mengunduh menu.zip dari GitHub! Periksa koneksi VPS.\033[0m"
@@ -36,6 +37,7 @@ if [ -d /root/menu-unpack/menu ]; then
     mv -f /root/menu-unpack/menu/* /usr/local/sbin/ 2>/dev/null || true
 fi
 rm -rf /root/menu-unpack /root/menu.zip
+curl -4 -sSL "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/update.sh?v=$(date +%s)" -o /usr/local/sbin/update 2>/dev/null && chmod +x /usr/local/sbin/update 2>/dev/null || true
 
 echo ""
 echo -e "${c_cyan}╭─────────────────────────────────────────────────────────────╮${c_nc}"
