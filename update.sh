@@ -10,43 +10,6 @@ c_yellow="\033[1;33m"
 c_white="\033[1;37m"
 c_nc="\033[0m"
 
-fun_bar() {
-    CMD[0]="$1"
-    (
-        [[ -e $HOME/fim ]] && rm -f $HOME/fim
-        ${CMD[0]} >/dev/null 2>&1
-        touch $HOME/fim
-    ) >/dev/null 2>&1 &
-    tput civis
-    echo -ne "  ${c_yellow}Mengunduh paket update ${c_white}- ${c_yellow}["
-    while true; do
-        for ((i = 0; i < 18; i++)); do
-            echo -ne "${c_green}#"
-            sleep 0.08s
-        done
-        [[ -e $HOME/fim ]] && rm -f $HOME/fim && break
-        echo -e "${c_yellow}]"
-        sleep 0.5s
-        tput cuu1
-        tput dl1
-        echo -ne "  ${c_yellow}Mengunduh paket update ${c_white}- ${c_yellow}["
-    done
-    echo -e "${c_yellow}]${c_white} - ${c_green}OK !${c_nc}"
-    tput cnorm
-}
-
-res1() {
-    curl -4 -sSL --connect-timeout 8 --max-time 30 -o /root/menu.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip || wget -4 -q --timeout=10 --tries=2 -O /root/menu.zip https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip
-    mkdir -p /root/menu-unpack /usr/local/sbin
-    unzip -o -q /root/menu.zip -d /root/menu-unpack >/dev/null 2>&1 || true
-    if [ -d /root/menu-unpack/menu ]; then
-        chmod +x /root/menu-unpack/menu/* 2>/dev/null || true
-        mv -f /root/menu-unpack/menu/* /usr/local/sbin/ 2>/dev/null || true
-    fi
-    rm -rf /root/menu-unpack /root/menu.zip /root/menu 2>/dev/null || true
-}
-
-clear
 echo -e "${c_cyan}╭─────────────────────────────────────────────────────────────╮${c_nc}"
 echo -e "${c_cyan}│${c_nc}             ${c_white}⚡ UPDATE MENU & CONTROL PANEL VPS ⚡${c_nc}            ${c_cyan}│${c_nc}"
 echo -e "${c_cyan}├─────────────────────────────────────────────────────────────┤${c_nc}"
@@ -54,12 +17,30 @@ echo -e "${c_cyan}│${c_nc}  ${c_yellow}Memproses sinkronisasi menu terbaru mat
 echo -e "${c_cyan}╰─────────────────────────────────────────────────────────────╯${c_nc}"
 echo ""
 
-fun_bar 'res1'
+echo -e "  [1/2] ${c_yellow}Mengunduh paket menu terbaru...${c_nc}"
+rm -rf /root/menu-unpack /root/menu.zip
+curl -4 -# -L --connect-timeout 10 -o /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip" || \
+wget -4 -q --timeout=15 -O /root/menu.zip "https://raw.githubusercontent.com/akunkhususjualanssh-create/script-tunneling/main/limit/menu.zip"
+
+if [[ ! -s /root/menu.zip ]]; then
+    echo -e "  \033[1;31m[ERROR] Gagal mengunduh menu.zip dari GitHub! Periksa koneksi VPS.\033[0m"
+    exit 1
+fi
+
+echo -e "  [2/2] ${c_yellow}Memasang dan memperbarui perintah menu di /usr/local/sbin...${c_nc}"
+mkdir -p /root/menu-unpack /usr/local/sbin
+unzip -o -q /root/menu.zip -d /root/menu-unpack >/dev/null 2>&1
+
+if [ -d /root/menu-unpack/menu ]; then
+    chmod +x /root/menu-unpack/menu/* 2>/dev/null || true
+    mv -f /root/menu-unpack/menu/* /usr/local/sbin/ 2>/dev/null || true
+fi
+rm -rf /root/menu-unpack /root/menu.zip
 
 echo ""
 echo -e "${c_cyan}╭─────────────────────────────────────────────────────────────╮${c_nc}"
 echo -e "${c_cyan}│${c_nc}        ${c_green}✓ MENU BERHASIL DI-UPDATE KA VERSI TERBARU!${c_nc}          ${c_cyan}│${c_nc}"
 echo -e "${c_cyan}╰─────────────────────────────────────────────────────────────╯${c_nc}"
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] gasan babulik ka menu"
-menu
+echo -e "  Ketik '\033[1;33mmenu\033[0m' gasan mambuka control panel VPS."
+echo ""
